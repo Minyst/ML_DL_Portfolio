@@ -113,6 +113,27 @@ https://github.com/Minyst/ML_DL_Portfolio/tree/main/CNN
 
 ---
 
+### Project 6: CLIP
+
+**Objective** <br/>
+To Find out how to use CLIP Model(Zero-shot image classification model) on Web Images and images from computer storage.
+
+**Technologies Used** <br/>
+- Model : CLIP
+- Skill: Zero-shot image classification
+
+Zero-shot image classification is a technique where the model can correctly classify new images even if it hasn't been directly trained on images of a specific class during training. The model leverages pre-learned knowledge and similarities or relationships between different classes it has learned to infer new classes.
+
+CLIP (Contrastive Language-Image Pretraining) is a representative model for zero-shot image classification. It simultaneously learns from both images and text, allowing it to understand the relationship between the two. CLIP employs contrastive learning, where it pairs images with their corresponding text descriptions during training. This enables the model to associate previously unseen classes with appropriate text descriptions, allowing for effective zero-shot classification.
+  
+**Key Results** <br/>
+The results of web images and images from computer storage predicted by CLIP.
+
+**URL** <br/>
+https://github.com/openai/CLIP
+
+---
+
 ## 📈 Skills
 
 - **Programming Languages**: Python
