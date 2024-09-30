@@ -134,7 +134,7 @@ https://github.com/openai/CLIP
 
 ---
 
-### Project 6: SAM2
+### Project 7: SAM2
 
 **Objective** <br/>
 After detecting objects using YOLO, SAM2 is used to generate segmentation masks for the detected objects, and then the masks are overlaid with colors corresponding to each object to create an output video. YOLO generates bounding boxes, and SAM processes them to handle segmentation, integrating the two models.
@@ -147,6 +147,8 @@ A new video detected by the model.
 
 URL
 https://github.com/facebookresearch/segment-anything-2
+
+---
 
 ## 📈 Skills
 
