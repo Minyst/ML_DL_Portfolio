@@ -22,7 +22,7 @@ As a result, I was able to create a ranking table showing which method and model
 The accuracy was similar, so I ranked them based on the ROC_AUC_SCORE.
 
 **URL** <br/>
-https://github.com/Minyst/ML_DL_Portfolio/tree/main/Credit%20Card%20Fraud%20Detection
+https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
 
 ---
 
