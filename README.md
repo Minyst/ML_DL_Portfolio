@@ -69,7 +69,7 @@ Second, while YOLOv10 shows some differences in results between pretrained and c
 Detectron2 exhibits no noticeable differences."
 
 **URL** <br/>
-https://github.com/Minyst/ML_DL_Portfolio/tree/main/Detectron
+https://github.com/facebookresearch/detectron2/blob/main/README.md
 
 ---
 
