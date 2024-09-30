@@ -48,7 +48,7 @@ The custom model, which was provided with images of various classes consistently
 However, its accuracy was much lower compared to the pretrained model.
 
 **URL** <br/>
-https://github.com/THU-MIG/yolov10
+https://github.com/THU-MIG/yolov10 <br/>
 https://docs.ultralytics.com/ko/models/yolov10
 
 ---
