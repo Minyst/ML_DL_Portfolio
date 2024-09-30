@@ -147,7 +147,7 @@ Models: SAM2, YOLO
 **Key Results** <br/>
 A new video detected by the model.
 
-URL
+URL <br/>
 https://github.com/facebookresearch/segment-anything-2 <br/>
 https://docs.ultralytics.com/ko/models/yolov10
 
