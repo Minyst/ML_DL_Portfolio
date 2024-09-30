@@ -110,6 +110,9 @@ Using CIFAR-10 data, build a complex CNN with TensorFlow and PyTorch.
 **Key Results** <br/>
 All processes of the CNN with TensorFlow and PyTorch are included: Data Augmentation, Padding, Batch Normalization, Pooling, Dropout, Flatten.
 
+**URL** <br/>
+https://www.cs.toronto.edu/~kriz/cifar.html
+
 ---
 
 ### Project 6: CLIP
