@@ -93,7 +93,8 @@ I was amazed at how natural the generated music sounded. <br/>
 Detailed adjustments can be made, and having an expert involved could further improve the synchronization and overall quality. 
 
 **URL** <br/>
-https://github.com/Minyst/ML_DL_Portfolio/tree/main/AI%20Cover
+https://github.com/facebookresearch/demucs <br/>
+https://github.com/openvpi/audio-slicer
 
 ---
 
