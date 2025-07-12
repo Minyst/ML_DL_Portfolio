@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로켓 탐지 시스템</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>로켓 탐지 시스템</h1>
+        <form id="upload-form">
+            <div class="form-group">
+                <label for="video-upload">동영상 업로드:</label>
+                <input type="file" id="video-upload" accept="video/*" required>
+            </div>
+            <button type="submit">탐지하기</button>
+        </form>
+        <div id="result" class="hidden">
+            <h2>탐지 결과</h2>
+            <div id="video-container">
+                <video id="uploaded-video" controls></video>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
