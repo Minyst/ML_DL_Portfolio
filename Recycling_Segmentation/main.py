@@ -118,10 +118,15 @@ async def predict(file: UploadFile = File(...)):
         "overlay": base64.b64encode(overlay_bytes.getvalue()).decode("utf-8")
     }
 
-# ✅ 헬스 체크 엔드포인트 (Render가 이걸로 살아있는지 확인함)
-@app.get("/")
-def health_check():
+# ✅ 헬스 체크 GET
+@app.get("/", include_in_schema=False)
+async def root():
     return {"status": "ok"}
+
+# ✅ 헬스 체크 HEAD (Render가 이걸 자동으로 보냄)
+@app.head("/", include_in_schema=False)
+async def root_head():
+    return {}
 
 # ✅ Render용 포트 설정
 if __name__ == "__main__":
