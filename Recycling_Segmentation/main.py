@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import AutoModelForSemanticSegmentation, AutoImageProcessor
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import torch
 import numpy as np
 import io
@@ -84,7 +84,7 @@ def smooth_mask(mask, sigma=1.0):
     return smoothed.astype(np.uint8)
 
 def add_contours(image, mask):
-    """테두리 추가"""
+    """OpenCV 기반 테두리 추가 (고품질)"""
     result = np.array(image)
     
     for class_id in range(1, len(class_names)):
@@ -94,7 +94,7 @@ def add_contours(image, mask):
         # 클래스별 마스크 생성
         class_mask = (mask == class_id).astype(np.uint8) * 255
         
-        # 컨투어 찾기
+        # 컨투어 찾기 (정확한 경계)
         contours, _ = cv2.findContours(class_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
         # 테두리 그리기 (더 굵게)
@@ -277,7 +277,7 @@ def predict_image(image_bytes, realtime=False):
 
         logger.info(f"모델 출력 크기: {preds.shape}")
 
-        # 원본 크기로 부드럽게 리사이징
+        # 원본 크기로 부드럽게 리사이징 (OpenCV 사용)
         if preds.shape != (original_size[1], original_size[0]):
             # OpenCV 사용 (더 부드러운 결과)
             preds_resized = cv2.resize(
