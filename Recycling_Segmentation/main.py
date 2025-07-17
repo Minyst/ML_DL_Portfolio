@@ -74,13 +74,16 @@ class_colors_bright = [
 ]
 
 def smooth_mask(mask, sigma=1.0):
-    """마스크 부드럽게 처리"""
+    """마스크 부드럽게 처리 (오류 수정)"""
+    mask = np.array(mask)  # PIL Image를 numpy array로 변환
     smoothed = np.zeros_like(mask, dtype=np.float32)
+    
     for class_id in range(len(class_names)):
         class_mask = (mask == class_id).astype(np.float32)
         if class_mask.sum() > 0:
             smoothed_class = gaussian_filter(class_mask, sigma=sigma)
             smoothed[smoothed_class > 0.5] = class_id
+    
     return smoothed.astype(np.uint8)
 
 def add_contours(image, mask):
@@ -233,35 +236,16 @@ def predict_image(image_bytes, realtime=False):
         
         logger.info(f"입력 이미지 크기: {original_size}")
         
-        # DeepLabV3 + MobileViT 최적화된 전처리
-        if realtime:
-            # 실시간: 품질과 속도 균형
-            target_size = 512
-            if max(original_size) > target_size:
-                ratio = target_size / max(original_size)
-                new_size = (int(original_size[0] * ratio), int(original_size[1] * ratio))
-                image_for_processing = image.resize(new_size, Image.Resampling.LANCZOS)
-            else:
-                image_for_processing = image
-        else:
-            # 일반: 고품질
-            target_size = 768  # 더 높은 해상도
-            if max(original_size) > target_size:
-                ratio = target_size / max(original_size)
-                new_size = (int(original_size[0] * ratio), int(original_size[1] * ratio))
-                image_for_processing = image.resize(new_size, Image.Resampling.LANCZOS)
-            else:
-                image_for_processing = image
+        # 모델 학습과 동일한 크기로 강제 조정
+        target_size = 512  # 학습 시 크기
+        image_for_processing = image.resize((target_size, target_size), Image.Resampling.LANCZOS)
         
         logger.info(f"처리 이미지 크기: {image_for_processing.size}")
         
-        # MobileViT 최적화된 전처리
+        # MobileViT 최적화된 전처리 (경고 제거)
         inputs = processor(
             images=image_for_processing, 
-            return_tensors="pt",
-            do_resize=True,
-            size={"height": 512, "width": 512},  # MobileViT 최적 크기
-            do_normalize=True
+            return_tensors="pt"
         )
 
         # GPU 사용 가능시 GPU로 이동
@@ -277,17 +261,16 @@ def predict_image(image_bytes, realtime=False):
 
         logger.info(f"모델 출력 크기: {preds.shape}")
 
-        # 원본 크기로 부드럽게 리사이징 (OpenCV 사용)
-        if preds.shape != (original_size[1], original_size[0]):
-            # OpenCV 사용 (더 부드러운 결과)
-            preds_resized = cv2.resize(
-                preds.astype(np.uint8), 
-                original_size, 
-                interpolation=cv2.INTER_NEAREST
-            )
-            preds_resized = Image.fromarray(preds_resized)
-        else:
-            preds_resized = Image.fromarray(preds.astype(np.uint8))
+        # 원본 크기로 부드럽게 리사이징 (단순하게)
+        preds = preds.astype(np.uint8)
+        
+        # 단순히 원본 크기로 리사이징
+        preds_resized = cv2.resize(
+            preds, 
+            original_size, 
+            interpolation=cv2.INTER_NEAREST
+        )
+        preds_resized = Image.fromarray(preds_resized)
         
         logger.info(f"최종 출력 크기: {preds_resized.size}")
         
