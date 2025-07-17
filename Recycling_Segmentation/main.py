@@ -25,7 +25,7 @@ app = FastAPI(
 # CORS 설정 (깔끔하게 최소화)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://ml-dl-portfolio.onrender.com"],
+    allow_origins=["https://ml-dl-portfolio.onrender.com", "*"],
     allow_credentials=False,
     allow_methods=["POST", "GET"],
     allow_headers=["Content-Type"],
