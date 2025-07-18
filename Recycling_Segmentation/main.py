@@ -276,12 +276,12 @@ def predict_image(image_bytes, realtime=False):
         logger.info(f"✅ 최종 출력 크기: {preds_resized.size}")
         
         if realtime:
-            # 실시간 모드: overlay만 반환
-            overlay = create_overlay_only(image, preds_resized)
+            # 실시간 모드: 깔끔한 overlay만
+            overlay = create_clean_overlay(image, preds_resized)
             return None, overlay
         else:
-            # 일반 모드: 둘 다 반환
-            pred, overlay = create_visualization(image, preds_resized)
+            # 일반 모드: 깔끔한 둘 다
+            pred, overlay = create_clean_visualization(image, preds_resized)
             return pred, overlay
             
     except Exception as e:
