@@ -1,4 +1,4 @@
-# main.py (FastAPI 서버 - 라벨 포함 Overlay/Predict 생성)
+# main.py (FastAPI 서버 - 개선된 Overlay/Predict 시각화)
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import AutoModelForSemanticSegmentation, AutoImageProcessor
@@ -36,6 +36,10 @@ class_colors_bright = [
     (0, 128, 255), (255, 0, 128), (160, 160, 160)
 ]
 
+LABEL_AREA_THRESHOLD = 1000
+LABEL_PER_CLASS_LIMIT = 1
+
+
 def load_font():
     try:
         return ImageFont.truetype("assets/fonts/Pretendard-Medium.otf", 18)
@@ -54,25 +58,37 @@ def smooth_mask(mask, sigma=0.8):
 def add_center_labels(image: Image.Image, mask: np.ndarray):
     draw = ImageDraw.Draw(image)
     font = load_font()
+    H, W = mask.shape
+    cx_min, cx_max = W // 3, W * 2 // 3
+    cy_min, cy_max = H // 3, H * 2 // 3
     for class_id in np.unique(mask):
         if class_id == 0 or class_id >= len(class_names):
             continue
         class_mask = (mask == class_id).astype(np.uint8)
         num_labels, labels = cv2.connectedComponents(class_mask)
+        components = []
         for label_id in range(1, num_labels):
             component_mask = (labels == label_id)
-            if component_mask.sum() < 300:
-                continue
+            area = component_mask.sum()
+            if area >= LABEL_AREA_THRESHOLD:
+                yx = np.argwhere(component_mask)
+                y_mean, x_mean = yx.mean(axis=0)
+                if cx_min < x_mean < cx_max and cy_min < y_mean < cy_max:
+                    components.append((area, component_mask))
+        components.sort(reverse=True, key=lambda x: x[0])
+        components = components[:LABEL_PER_CLASS_LIMIT]
+        for _, component_mask in components:
             yx = np.argwhere(component_mask)
-            if len(yx) == 0:
-                continue
-            y_mean, x_mean = yx.mean(axis=0).astype(int)
+            y_min, x_min = yx.min(axis=0)
+            y_max, x_max = yx.max(axis=0)
+            x_center = (x_min + x_max) // 2
+            y_center = (y_min + y_max) // 2
             label = class_names[class_id]
             draw.rounded_rectangle(
-                [(x_mean - 50, y_mean - 18), (x_mean + 50, y_mean + 18)],
+                [(x_center - 50, y_center - 18), (x_center + 50, y_center + 18)],
                 radius=6, fill="black"
             )
-            draw.text((x_mean - 35, y_mean - 12), label, fill="white", font=font)
+            draw.text((x_center - 35, y_center - 12), label, fill="white", font=font)
     return image
 
 def create_visualization(image, mask):
