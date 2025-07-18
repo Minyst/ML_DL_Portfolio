@@ -89,7 +89,7 @@ def create_prediction(image, mask):
 async def load_model():
     global model, processor
     model = AutoModelForSemanticSegmentation.from_pretrained(MODEL_PATH)
-    processor = AutoImageProcessor.from_pretrained(MODEL_PATH)
+    processor = AutoImageProcessor.from_pretrained(MODEL_PATH, use_fast=True)
     model.eval()
     if torch.cuda.is_available():
         model.cuda()
