@@ -131,3 +131,7 @@ async def predict(file: UploadFile = File(...)):
 async def root():
     return {"message": "Segmentation API is running"}
 
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, log_level="info")
+
