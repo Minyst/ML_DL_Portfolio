@@ -1,9 +1,10 @@
-python-multipart
 fastapi
 uvicorn
+python-multipart
 torch
 transformers
 safetensors
 pillow
 opencv-python-headless
 scipy
+numpy
