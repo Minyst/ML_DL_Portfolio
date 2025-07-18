@@ -30,15 +30,15 @@ MODEL_PATH = "./best_model"
 model = None
 processor = None
 
-class_names = ["background", "can", "glass", "paper", "plastic", "styrofoam", "vinyl"]
+class_names = ["background", "can", "glass", "plastic", "styrofoam", "vinyl", "others"]
 class_colors_bright = [
-    (0, 0, 0), (0, 255, 255), (255, 255, 0), (128, 255, 0),
-    (255, 0, 0), (0, 128, 255), (255, 0, 128)
+    (0, 0, 0), (0, 255, 255), (255, 255, 0), (255, 0, 0),
+    (0, 128, 255), (255, 0, 128), (160, 160, 160)
 ]
 
 def load_font():
     try:
-        return ImageFont.truetype("arial.ttf", 18)
+        return ImageFont.truetype("assets/fonts/Pretendard-Medium.otf", 18)
     except:
         return ImageFont.load_default()
 
@@ -68,14 +68,11 @@ def add_center_labels(image: Image.Image, mask: np.ndarray):
                 continue
             y_mean, x_mean = yx.mean(axis=0).astype(int)
             label = class_names[class_id]
-            text_size = draw.textbbox((x_mean, y_mean), label, font=font)
-            padding = 10
-            rect_coords = [
-                (x_mean - 45, y_mean - 18),
-                (x_mean + 45, y_mean + 18)
-            ]
-            draw.rounded_rectangle(rect_coords, radius=8, fill="black")
-            draw.text((x_mean - 35, y_mean - 15), label, fill="white", font=font)
+            draw.rounded_rectangle(
+                [(x_mean - 50, y_mean - 18), (x_mean + 50, y_mean + 18)],
+                radius=6, fill="black"
+            )
+            draw.text((x_mean - 35, y_mean - 12), label, fill="white", font=font)
     return image
 
 def create_visualization(image, mask):
@@ -147,6 +144,10 @@ async def load_model():
     if torch.cuda.is_available():
         model = model.cuda()
     logger.info("Model loaded.")
+
+@app.get("/")
+async def root():
+    return {"message": "Segmentation API is running. Use /predict or /predict-realtime."}
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
