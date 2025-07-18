@@ -126,3 +126,8 @@ async def predict(file: UploadFile = File(...)):
         "prediction": base64.b64encode(pred_io.getvalue()).decode("utf-8"),
         "classes": class_names
     }
+
+@app.get("/")
+async def root():
+    return {"message": "Segmentation API is running"}
+
