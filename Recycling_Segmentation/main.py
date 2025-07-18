@@ -16,10 +16,15 @@ app.add_middleware(
 )
 
 MODEL_PATH = "./best_model"
-class_names = ["background", "can", "glass", "plastic", "styrofoam", "vinyl"]
+class_names = ["background", "can", "glass", "paper", "plastic", "styrofoam", "vinyl"]
 class_colors = [
-    (0, 0, 0), (0, 255, 255), (255, 255, 0),
-    (255, 0, 0), (0, 128, 255), (255, 0, 128)
+    (0, 0, 0),        # background - 검은색
+    (0, 255, 255),    # can - 밝은 청록색
+    (255, 255, 0),    # glass - 밝은 노란색
+    (128, 255, 0),    # paper - 연두색
+    (255, 0, 0),      # plastic - 밝은 빨간색
+    (0, 128, 255),    # styrofoam - 밝은 파란색
+    (255, 0, 128)     # vinyl - 밝은 분홍색
 ]
 
 model = None
