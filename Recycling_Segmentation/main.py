@@ -37,8 +37,8 @@ def load_font():
     except:
         return ImageFont.load_default()
 
-def smooth_mask_advanced(mask, sigma=1.5):
-    """더 부드러운 마스크 생성"""
+def smooth_mask_advanced(mask, sigma=0.8):
+    """정확도를 위해 부드러움 줄임"""
     result = np.zeros_like(mask, dtype=np.float32)
     
     # 각 클래스별로 처리
@@ -48,21 +48,18 @@ def smooth_mask_advanced(mask, sigma=1.5):
             
         class_mask = (mask == i).astype(np.float32)
         if class_mask.sum() > 0:
-            # 가우시안 블러 적용
+            # 가우시안 블러 줄임 (정확도 유지)
             smoothed = gaussian_filter(class_mask, sigma=sigma)
             
-            # 모폴로지 연산으로 더 부드럽게
-            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+            # 모폴로지 연산 최소화
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
             class_mask_uint8 = (class_mask * 255).astype(np.uint8)
             
-            # 닫힘 연산 (구멍 메우기)
+            # 간단한 닫힘 연산만
             closed = cv2.morphologyEx(class_mask_uint8, cv2.MORPH_CLOSE, kernel)
             
-            # 열림 연산 (노이즈 제거)
-            opened = cv2.morphologyEx(closed, cv2.MORPH_OPEN, kernel)
-            
-            # 가우시안 블러로 최종 부드럽게
-            final_smooth = cv2.GaussianBlur(opened, (9, 9), 2.0)
+            # 최소한의 블러
+            final_smooth = cv2.GaussianBlur(closed, (5, 5), 1.0)
             
             # 임계값 적용
             result[final_smooth > 127] = i
@@ -100,6 +97,7 @@ def add_labels(image: Image.Image, mask: np.ndarray):
     draw = ImageDraw.Draw(image)
     font = load_font()
     
+    # 각 클래스별로 연결된 구성요소 찾기
     for class_id in np.unique(mask):
         if class_id == 0 or class_id >= len(class_names):
             continue
@@ -109,21 +107,53 @@ def add_labels(image: Image.Image, mask: np.ndarray):
         
         for i in range(1, num):
             region = (labels == i)
-            if region.sum() < 500:  # 최소 영역 크기 증가
+            if region.sum() < 800:  # 최소 영역 크기 증가 (더 정확한 라벨링)
                 continue
                 
+            # 영역의 중심점 계산 (더 정확하게)
             yx = np.argwhere(region)
-            y, x = yx.mean(axis=0).astype(int)
+            if len(yx) == 0:
+                continue
+                
+            y_center, x_center = yx.mean(axis=0).astype(int)
+            
+            # 영역 내부에 있는지 확인
+            if not region[y_center, x_center]:
+                # 영역 내부의 점 찾기
+                y_coords, x_coords = np.where(region)
+                mid_idx = len(y_coords) // 2
+                y_center, x_center = y_coords[mid_idx], x_coords[mid_idx]
             
             label = class_names[class_id]
             
-            # 더 부드러운 라벨 배경
+            # 텍스트 크기 측정
+            bbox = draw.textbbox((0, 0), label, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            
+            # 텍스트에 맞는 박스 크기 (패딩 최소화)
+            padding_x = 8
+            padding_y = 4
+            box_width = text_width + padding_x * 2
+            box_height = text_height + padding_y * 2
+            
+            # 박스 좌표
+            left = x_center - box_width // 2
+            top = y_center - box_height // 2
+            right = left + box_width
+            bottom = top + box_height
+            
+            # 적당한 크기의 둥근 박스
             draw.rounded_rectangle(
-                [(x - 50, y - 20), (x + 50, y + 20)], 
-                radius=12,  # 더 둥근 모서리
+                [(left, top), (right, bottom)], 
+                radius=8,
                 fill="black"
             )
-            draw.text((x - 40, y - 12), label, fill="white", font=font)
+            
+            # 텍스트를 박스 정중앙에 배치
+            text_x = left + padding_x
+            text_y = top + padding_y
+            draw.text((text_x, text_y), label, fill="white", font=font)
     
     return image
 
