@@ -37,61 +37,65 @@ def load_font():
     except:
         return ImageFont.load_default()
 
-def smooth_mask_advanced(mask, sigma=0.8):
-    """정확도를 위해 부드러움 줄임"""
+def smooth_mask_advanced(mask, sigma=1.2):
+    """완만한 곡선으로 부드러운 마스크 생성"""
     result = np.zeros_like(mask, dtype=np.float32)
+    height, width = mask.shape
     
     # 각 클래스별로 처리
-    for i in range(len(class_names)):
-        if i == 0:  # background 스킵
-            continue
-            
+    for i in range(1, len(class_names)):  # background 제외
         class_mask = (mask == i).astype(np.float32)
-        if class_mask.sum() > 0:
-            # 가우시안 블러 줄임 (정확도 유지)
-            smoothed = gaussian_filter(class_mask, sigma=sigma)
-            
-            # 모폴로지 연산 최소화
-            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-            class_mask_uint8 = (class_mask * 255).astype(np.uint8)
-            
-            # 간단한 닫힘 연산만
-            closed = cv2.morphologyEx(class_mask_uint8, cv2.MORPH_CLOSE, kernel)
-            
-            # 최소한의 블러
-            final_smooth = cv2.GaussianBlur(closed, (5, 5), 1.0)
-            
-            # 임계값 적용
-            result[final_smooth > 127] = i
-    
-    return result.astype(np.uint8)
-
-def create_smooth_edge_mask(mask, edge_blur=3):
-    """가장자리를 부드럽게 만드는 함수"""
-    result = mask.copy()
-    
-    for class_id in range(1, len(class_names)):
-        class_mask = (mask == class_id).astype(np.uint8) * 255
         if class_mask.sum() == 0:
             continue
             
-        # 가장자리 감지
-        edges = cv2.Canny(class_mask, 50, 150)
+        # 1. 거리 변환으로 부드러운 경계 생성
+        binary_mask = (class_mask > 0).astype(np.uint8)
         
-        # 가장자리 주변을 블러 처리
-        kernel = np.ones((edge_blur*2+1, edge_blur*2+1), np.uint8)
-        edge_region = cv2.dilate(edges, kernel, iterations=1)
+        # 2. 모폴로지 연산으로 구멍 메우기
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        closed = cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel)
         
-        # 해당 영역에 가우시안 블러 적용
-        blurred_mask = cv2.GaussianBlur(class_mask, (edge_blur*2+1, edge_blur*2+1), edge_blur/2)
+        # 3. 거리 변환 적용
+        dist_transform = cv2.distanceTransform(closed, cv2.DIST_L2, 5)
         
-        # 원본과 블러된 마스크를 블렌딩
-        blend_factor = edge_region.astype(np.float32) / 255.0
-        final_mask = class_mask.astype(np.float32) * (1 - blend_factor) + blurred_mask.astype(np.float32) * blend_factor
+        # 4. 가우시안 블러로 부드럽게
+        blurred = cv2.GaussianBlur(dist_transform, (15, 15), sigma)
         
-        result[final_mask > 127] = class_id
+        # 5. 곡선형 임계값 적용 (시그모이드 함수 사용)
+        # 이렇게 하면 각진 경계가 아닌 부드러운 곡선이 됨
+        threshold = np.max(blurred) * 0.3  # 동적 임계값
+        smooth_weights = 1.0 / (1.0 + np.exp(-10 * (blurred - threshold)))
+        
+        # 6. 결과에 가중치로 적용
+        result[smooth_weights > 0.5] = i
     
-    return result
+    return result.astype(np.uint8)
+
+def create_smooth_edge_mask(mask, edge_blur=5):
+    """가장자리를 더욱 부드럽게 만드는 함수"""
+    result = mask.copy().astype(np.float32)
+    
+    for class_id in range(1, len(class_names)):
+        class_region = (mask == class_id)
+        if class_region.sum() == 0:
+            continue
+            
+        # 클래스 마스크를 float로 변환
+        class_mask = class_region.astype(np.float32)
+        
+        # 여러 단계의 가우시안 블러 적용 (멀티스케일)
+        blur1 = cv2.GaussianBlur(class_mask, (edge_blur, edge_blur), edge_blur/3)
+        blur2 = cv2.GaussianBlur(class_mask, (edge_blur*2+1, edge_blur*2+1), edge_blur/2)
+        blur3 = cv2.GaussianBlur(class_mask, (edge_blur*3+1, edge_blur*3+1), edge_blur)
+        
+        # 블러들을 가중 평균으로 결합
+        combined = (blur1 * 0.5 + blur2 * 0.3 + blur3 * 0.2)
+        
+        # 부드러운 임계값 적용
+        smooth_mask = np.where(combined > 0.3, class_id, 0)
+        result[smooth_mask == class_id] = class_id
+    
+    return result.astype(np.uint8)
 
 def add_labels(image: Image.Image, mask: np.ndarray):
     draw = ImageDraw.Draw(image)
@@ -160,7 +164,7 @@ def add_labels(image: Image.Image, mask: np.ndarray):
 def create_overlay(image, mask):
     img = image.copy().convert("RGB")
     
-    # 부드러운 마스크 적용
+    # 완만한 곡선의 부드러운 마스크 적용
     smooth_mask = smooth_mask_advanced(np.array(mask))
     smooth_mask = create_smooth_edge_mask(smooth_mask)
     
@@ -171,22 +175,19 @@ def create_overlay(image, mask):
             
         color = class_colors[class_id]
         arr = np.array(img)
-        alpha = 0.4  # 투명도 약간 증가
+        alpha = 0.35  # 약간 투명도 조정
         
         for c in range(3):
             arr[:, :, c][region] = arr[:, :, c][region] * (1 - alpha) + color[c] * alpha
         
         img = Image.fromarray(arr)
     
-    # 가장자리 블러 효과 추가
-    img = img.filter(ImageFilter.SMOOTH_MORE)
-    
     return add_labels(img, smooth_mask)
 
 def create_prediction(image, mask):
     pred = Image.new("RGB", image.size, (0, 0, 0))
     
-    # 부드러운 마스크 적용
+    # 완만한 곡선의 부드러운 마스크 적용
     smooth_mask = smooth_mask_advanced(np.array(mask))
     smooth_mask = create_smooth_edge_mask(smooth_mask)
     
@@ -202,9 +203,6 @@ def create_prediction(image, mask):
             arr[:, :, c][region] = color[c]
         
         pred = Image.fromarray(arr)
-    
-    # 전체적으로 부드럽게 처리
-    pred = pred.filter(ImageFilter.SMOOTH)
     
     return add_labels(pred, smooth_mask)
 
