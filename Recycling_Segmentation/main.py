@@ -58,16 +58,16 @@ def smooth_mask_advanced(mask, sigma=1.2):
         # 3. 거리 변환 적용
         dist_transform = cv2.distanceTransform(closed, cv2.DIST_L2, 5)
         
-        # 4. 가우시안 블러로 부드럽게
+        # 4. 가우시안 블러로 부드럽게 (커널 크기 수정)
         blurred = cv2.GaussianBlur(dist_transform, (15, 15), sigma)
         
         # 5. 곡선형 임계값 적용 (시그모이드 함수 사용)
-        # 이렇게 하면 각진 경계가 아닌 부드러운 곡선이 됨
-        threshold = np.max(blurred) * 0.3  # 동적 임계값
-        smooth_weights = 1.0 / (1.0 + np.exp(-10 * (blurred - threshold)))
-        
-        # 6. 결과에 가중치로 적용
-        result[smooth_weights > 0.5] = i
+        if np.max(blurred) > 0:  # 0으로 나누기 방지
+            threshold = np.max(blurred) * 0.3  # 동적 임계값
+            smooth_weights = 1.0 / (1.0 + np.exp(-10 * (blurred - threshold)))
+            
+            # 6. 결과에 가중치로 적용
+            result[smooth_weights > 0.5] = i
     
     return result.astype(np.uint8)
 
@@ -83,10 +83,18 @@ def create_smooth_edge_mask(mask, edge_blur=5):
         # 클래스 마스크를 float로 변환
         class_mask = class_region.astype(np.float32)
         
+        # 커널 크기가 홀수인지 확인하고 조정
+        def ensure_odd_kernel(size):
+            return size if size % 2 == 1 else size + 1
+        
         # 여러 단계의 가우시안 블러 적용 (멀티스케일)
-        blur1 = cv2.GaussianBlur(class_mask, (edge_blur, edge_blur), edge_blur/3)
-        blur2 = cv2.GaussianBlur(class_mask, (edge_blur*2+1, edge_blur*2+1), edge_blur/2)
-        blur3 = cv2.GaussianBlur(class_mask, (edge_blur*3+1, edge_blur*3+1), edge_blur)
+        kernel1 = ensure_odd_kernel(edge_blur)
+        kernel2 = ensure_odd_kernel(edge_blur * 2 + 1)
+        kernel3 = ensure_odd_kernel(edge_blur * 3 + 1)
+        
+        blur1 = cv2.GaussianBlur(class_mask, (kernel1, kernel1), edge_blur/3)
+        blur2 = cv2.GaussianBlur(class_mask, (kernel2, kernel2), edge_blur/2)
+        blur3 = cv2.GaussianBlur(class_mask, (kernel3, kernel3), edge_blur)
         
         # 블러들을 가중 평균으로 결합
         combined = (blur1 * 0.5 + blur2 * 0.3 + blur3 * 0.2)
