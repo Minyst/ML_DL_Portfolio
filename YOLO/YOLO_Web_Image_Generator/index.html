@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Image Detection System</h1>
+        <form id="upload-form">
+            <div class="form-group">
+                <label for="image-upload">Upload:</label>
+                <input type="file" id="image-upload" accept="image/*" required>
+            </div>
+            <button type="submit">Detect</button>
+        </form>
+        <div id="result" class="hidden">
+            <h2>Result</h2>
+            <div id="image-container">
+                <img id="uploaded-image" src="" alt="Uploaded Image">
+                <canvas id="detection-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "crop_size": {
+    "height": 512,
+    "width": 512
+  },
+  "do_center_crop": true,
+  "do_flip_channel_order": true,
+  "do_flip_channels": true,
+  "do_rescale": true,
+  "do_resize": true,
+  "image_processor_type": "MobileViTImageProcessor",
+  "resample": 2,
+  "rescale_factor": 0.00392156862745098,
+  "size": {
+    "shortest_edge": 544
+  },
+  "use_square_size": false
+}
