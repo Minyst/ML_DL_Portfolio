@@ -10,8 +10,6 @@ import io
 import os
 import uvicorn
 import base64
-from scipy import ndimage
-from sklearn.cluster import KMeans
 
 # ===== FastAPI 앱 생성 =====
 app = FastAPI(title="Smart Recycling Segmentation API")
@@ -69,8 +67,14 @@ font_path = os.path.join(os.path.dirname(__file__), "Pretendard-SemiBold.otf")
 
 # ===== 배경 제거 및 객체 분리 함수들 =====
 
-# 사용하지 않는 함수들 제거하여 속도 향상
-# smart_background_removal, separate_complex_objects, enhance_segmentation_quality, remove_noise_and_smooth 함수들은 제거
+# 사용하지 않는 함수들 제거 (완전 삭제)
+# 더 이상 사용하지 않는 함수들:
+# - smart_background_removal (제거됨)
+# - separate_complex_objects (제거됨) 
+# - enhance_segmentation_quality (제거됨)
+# - remove_noise_and_smooth (제거됨)
+
+# 모든 KMeans 관련 import도 제거 (더 이상 사용 안 함)
 
 # ===== 시각화 함수들 =====
 
